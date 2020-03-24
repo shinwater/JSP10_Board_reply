@@ -62,7 +62,7 @@ public class FrontController extends HttpServlet{
 		prop.load(fis);
 		
 		//command에 board_list.do가 들어가있으니까아....???? 키에 대한 value값 execute|com.reply.action.BbsListAction를 리턴해줌.
-		String value = prop.getProperty(command);	
+		String value = prop.getProperty(command);	//키값넣으면 value값나옴.유...
 		System.out.println("value ==> " + value);
 		
 		if(value.substring(0,7).equals("execute")) {
@@ -92,6 +92,7 @@ public class FrontController extends HttpServlet{
 				
 				//다형성으로 객체 생성하는 방법~ url2에있는 객체 (BbsListAction)생성.
 				//action = new BbsListAction()의 동적객체생성방법 ↓
+				//부모객체참조변수   , 자식ㅋㄹ래스의 객체 생성ㅎ
 				action = (Action)url.newInstance();//실행될 때 객체 생성하는 방법.->trycatch 해보면 예외가 2가지나옴!
 				
 				forward = action.execute(request, response);//반환타입:ActionForward ㅌㅏ입
@@ -103,7 +104,7 @@ public class FrontController extends HttpServlet{
 		} else { //value값중에 "execute"가 없는 경우.
 				 //viewPage로 이동시킨다.
 			forward = new ActionForward();
-			forward.setRedirect(false);			//*.jsp페이지로 이동.
+			forward.setRedirect(false);			//*.jsp페이지로 이동.->ㅂ 페이지로 넘어가겠다/..
 			forward.setPath(value);
 			
 		}

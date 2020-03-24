@@ -10,6 +10,8 @@ import java.util.List;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 
+import com.reply.model.BbsDTO;
+
 
 public class BbsDAO {
 
@@ -70,7 +72,7 @@ public class BbsDAO {
 		}
 	}//closeConn() end
 	
-	//jsp_bbs 테이블의 전체 게시물을 조회하는 메서드
+	//jsp_Board 테이블의 전체 게시물을 조회하는 메서드
 	public List<BbsDTO> getBbsList(){
 		List<BbsDTO> list =new ArrayList<BbsDTO>();
 		
@@ -83,16 +85,16 @@ public class BbsDAO {
 			
 			while(rs.next()) {
 				BbsDTO dto = new BbsDTO();
-				dto.setBoard_no(rs.getInt("board_no"));
-				dto.setBoard_writer(rs.getString("board_writer"));
-				dto.setBoard_title(rs.getString("board_title"));
-				dto.setBoard_cont(rs.getString("board_cont"));
-				dto.setBoard_pwd(rs.getString("board_pwd"));
-				dto.setBoard_hit(rs.getInt("board_hit"));
-				dto.setBoard_date(rs.getString("board_date"));
-				dto.setBoard_group(rs.getInt("board_group"));
-				dto.setBoard_step(rs.getInt("board_step"));
-				dto.setBoard_indent(rs.getInt("board_indent"));
+				dto.setBoard_no(rs.getInt("Board_no"));
+				dto.setBoard_writer(rs.getString("Board_writer"));
+				dto.setBoard_title(rs.getString("Board_title"));
+				dto.setBoard_cont(rs.getString("Board_cont"));
+				dto.setBoard_pwd(rs.getString("Board_pwd"));
+				dto.setBoard_hit(rs.getInt("Board_hit"));
+				dto.setBoard_date(rs.getString("Board_date"));
+				dto.setBoard_group(rs.getInt("Board_group"));
+				dto.setBoard_step(rs.getInt("Board_step"));
+				dto.setBoard_indent(rs.getInt("Board_indent"));
 				
 				list.add(dto);
 			}
@@ -104,7 +106,144 @@ public class BbsDAO {
 			closeConn(rs, pstmt, con);
 		}
 		return list;
-	}//getBbsList() end;
+	}//getBoardList() end;
+	
+	
+	//DB에 글쓰기폼의 내용을 저장해주는 메서드
+	public int BbsWrite(BbsDTO dto) {
+		int res = 0;
+		
+		try {
+			
+			openConn();
+			con.setAutoCommit(false);
+			
+			sql="insert into jsp_bbs values(bbs_seq.nextval,?,?,?,?,default,sysdate,bbs_seq.currval,0,0)";
+			
+			pstmt = con.prepareStatement(sql);
+			pstmt.setString(1, dto.getBoard_writer());
+			pstmt.setString(2, dto.getBoard_title());
+			pstmt.setString(3, dto.getBoard_cont());
+			pstmt.setString(4, dto.getBoard_pwd());
+			res = pstmt.executeUpdate();
+			con.commit();
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			try {
+				con.rollback();
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			e.printStackTrace();
+		} finally {
+			closeConn(rs, pstmt, con);
+		}
+		
+		return res;
+	}//BoardWrite() end;
+	
+	public void BoardHit(int no) {
+		try {
+			openConn();
+			sql = "update jsp_bbs set Board_hit= Board_hit + 1 where Board_no=?";
+
+			pstmt = con.prepareStatement(sql);
+			pstmt.setInt(1, no);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			closeConn(rs, pstmt, con);
+		}
+	}// BoardHit() end
+
+	// Board1테이블의 게시물번호에 해당하는 글을 조회하는 메서드
+	public BbsDTO getCont(int no) {
+		BbsDTO dto = new BbsDTO();
+
+		try {
+			openConn();
+			sql = "select * from jsp_bbs where Board_no=?";
+
+			pstmt = con.prepareStatement(sql);
+			pstmt.setInt(1, no);
+			rs = pstmt.executeQuery();
+
+			if (rs.next()) {
+				dto.setBoard_no(rs.getInt("Board_no"));
+				dto.setBoard_writer(rs.getString("Board_writer"));
+				dto.setBoard_title(rs.getString("Board_title"));
+				dto.setBoard_cont(rs.getString("Board_cont"));
+				dto.setBoard_pwd(rs.getString("Board_pwd"));
+				dto.setBoard_hit(rs.getInt("Board_hit"));
+				dto.setBoard_date(rs.getString("Board_date"));
+				dto.setBoard_group(rs.getInt("Board_group"));
+				dto.setBoard_step(rs.getInt("Board_step"));
+				dto.setBoard_indent(rs.getInt("Board_indent"));
+
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			closeConn(rs, pstmt, con);
+		}
+
+		return dto;
+	}// getCont() end;
+	
+	
+	//jsp_bbs 테이블의 게시판 글의 step을 하나 증가시키는 매ㅔ서드
+	public void replyUpdate(int group, int step) {
+		
+		try {
+			openConn();
+			sql="update jsp_bbs set board_step = board_step + 1 where board_group= ? and board_step > ?";
+			
+			pstmt = con.prepareStatement(sql);
+			pstmt.setInt(1, group);
+			pstmt.setInt(2, step);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			closeConn(rs, pstmt, con);
+		}
+	}//replyUpdate() end;
+	
+	//jsp_bbs 테이블의 게시판 원글에 답변글을 추가하는 메서드
+	public int replyBoard(BbsDTO dto) {
+		int result = 0;
+		try {
+			openConn();
+			sql="insert into jsp_bbs values(bbs_seq.nextval,?,?,?,?,default,sysdate,?,?,?)";
+			
+			pstmt = con.prepareStatement(sql);
+			pstmt.setString(1, dto.getBoard_writer());
+			pstmt.setString(2, dto.getBoard_title());
+			pstmt.setString(3, dto.getBoard_cont());
+			pstmt.setString(4, dto.getBoard_pwd());
+			pstmt.setInt(5, dto.getBoard_group());
+			pstmt.setInt(6, dto.getBoard_step()+1);
+			pstmt.setInt(7, dto.getBoard_indent()+1);
+			result = pstmt.executeUpdate();
+			
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			closeConn(rs, pstmt, con);
+		}
+		
+		return result;
+		
+		
+	}
 	
 	
 }
